@@ -1,6 +1,5 @@
 # make-js-game
 **Arkanoid** <br />
-Game in JS <br />
 
 ### Language: JavaScript
 
