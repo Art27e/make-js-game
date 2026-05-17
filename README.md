@@ -9,13 +9,13 @@
 <img src="https://i.ibb.co/r2Mn6kWN/game-screen.png" alt="Game screenshot" width="500" height="300">
 
 #### Run App
-**Recommended** <br />
-Linux <br />
+Linux (recommended) <br />
 > python3 -m http.server 5500 <br />
 
 Windows <br />
 > Open index.html <br />
-> Use Liver Server Plugin in Visual Studio Code (recommended) <br />
+
+> or Use Liver Server Plugin in Visual Studio Code (highly recommended) <br />
 
 #### Code Description
 A classic Arkanoid game built with vanilla JavaScript and HTML5 Canvas. <br /> Actively developed in 2026 — planned updates include visual redesign, sprite/sound integration, bug fixes, and migration from Canvas to pure HTML/CSS/JS.
