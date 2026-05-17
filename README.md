@@ -21,8 +21,7 @@ Windows <br />
 A classic Arkanoid game built with vanilla JavaScript and HTML5 Canvas. Actively developed in 2026 — planned updates include visual redesign, sprite/sound integration, bug fixes, and migration from Canvas to pure HTML/CSS/JS.
 
 #### Game Updates
-**1.0.0**
-- Refactored ball collision detection
+**1.0.0**- Refactored ball collision detection
 - Redesigned game visuals
 - Added pause and game start functionality
 - Increased ball speed
@@ -31,5 +30,4 @@ A classic Arkanoid game built with vanilla JavaScript and HTML5 Canvas. Actively
   - Normal brick: 2 hits to destroy
   - Heavy brick: 3 hits to destroy
 
-**beta 1.0**
-- Release
+**beta 1.0**- Release
