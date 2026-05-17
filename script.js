@@ -1,44 +1,35 @@
 const canvas = document.getElementById('c1'); // Get the canvas element
 const ctx = canvas.getContext('2d'); // Get the 2D drawing context
 
-/* Coordinates and ball speed
-temp */
+let gameState = 'menu'; // Initial game state
 
-const coordinatesDisplay = document.getElementById('coordinates'); // Get the coordinates display element
-
-canvas.addEventListener('mousemove', (event) => { // Add mousemove event listener to the canvas
-  const rect = canvas.getBoundingClientRect();
+canvas.addEventListener('mousemove', (event) => {
+  // Mouse move event listener
+  const rect = canvas.getBoundingClientRect(); // Get the canvas position and size
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
-
-  coordinatesDisplay.textContent = `Coords: X:${x.toFixed(2)} Y:${y.toFixed(
-    2
-  )}`;
 });
 
 canvas.addEventListener('click', () => {
+  if (gameState !== 'playing') return;
   if (!ifBallLaunched) {
     ifBallLaunched = true;
   }
-
-  ball.x = ball.x + ball.speedX; // Update ball position on X axis
-  ball.y = ball.y + ball.speedY; // Update ball position on Y axis
 });
 
 /* Platform */
-
 const platform = {
   width: 130,
   height: 20,
   x: canvas.width / 2 - 50,
   y: canvas.height - 30,
-  speed: 7,
+  speed: 2,
 };
 
 function drawPlatform() {
   ctx.beginPath();
-  ctx.strokeStyle = "black";
-  ctx.fillStyle = "lightblue";
+  ctx.strokeStyle = 'black';
+  ctx.fillStyle = 'lightblue';
   ctx.roundRect(platform.x, platform.y, platform.width, platform.height);
   ctx.fill();
   ctx.stroke();
@@ -51,7 +42,9 @@ let ifBallLaunched = false;
 
 /* Controls */
 
-window.addEventListener('mousemove', (event) => { // Mouse move event listener
+window.addEventListener('mousemove', (event) => {
+  // Mouse move event listener
+  if (gameState !== 'playing') return; // Only respond to mouse movement when the game is in the 'playing' state
   const canvasRect = canvas.getBoundingClientRect(); // Get the canvas position
   const mouseX = event.clientX - canvasRect.left; // Calculate mouse X relative to canvas
 
@@ -59,14 +52,17 @@ window.addEventListener('mousemove', (event) => { // Mouse move event listener
 
   // Ensure the platform stays within the canvas boundaries
 
-  if (platform.x < 0) { // Left boundary
+  if (platform.x < 0) {
+    // Left boundary
     platform.x = 0; // Prevent going out of bounds
-  } else if (platform.x + platform.width > canvas.width) { // Right boundary
+  } else if (platform.x + platform.width > canvas.width) {
+    // Right boundary
     platform.x = canvas.width - platform.width; // Prevent going out of bounds
   }
 });
 
 window.addEventListener('keydown', (event) => {
+  if (gameState !== 'playing') return; // Only respond to key presses when the game is in the 'playing' state
   if (event.key === 'ArrowLeft') {
     isLeftisPressed = true;
   }
@@ -76,6 +72,7 @@ window.addEventListener('keydown', (event) => {
 });
 
 window.addEventListener('keyup', (event) => {
+  if (gameState !== 'playing') return; // Only respond to key releases when the game is in the 'playing' state
   if (event.key === 'ArrowLeft') {
     isLeftisPressed = false;
   }
@@ -101,8 +98,10 @@ const ball = {
   radius: 10,
   x: canvas.width / 2,
   y: canvas.height - 50,
-  speedX: 2,
-  speedY: 2,
+  prevX: canvas.width / 2,
+  prevY: canvas.height - 50,
+  speedX: 5,
+  speedY: 5,
 };
 
 function drawBall() {
@@ -112,7 +111,7 @@ function drawBall() {
     ball.y,
     ball.radius,
     ball.startAngle,
-    ball.endAngle * Math.PI
+    ball.endAngle * Math.PI,
   );
   ctx.fillStyle = '#a53fe0ff';
   ctx.fill();
@@ -122,67 +121,46 @@ function drawBall() {
 function updateBallPosition() {
   //const initialSpeed = 2;
 
-
   if (!ifBallLaunched) {
-    ball.x = platform.x + platform.width / 2;
-    ball.y = platform.y - ball.radius
+    // If the ball is not launched, it should be positioned on top of the platform
+    ball.x = platform.x + platform.width / 2; // Center the ball on the platform
+    ball.y = platform.y - ball.radius; // Position the ball just above the platform
+    ball.prevX = ball.x; // Update previous position to current position
+    ball.prevY = ball.y;
     return;
   }
 
+  ball.prevX = ball.x; // Store the current position as previous position before updating
+  ball.prevY = ball.y;
   ball.x = ball.x + ball.speedX; // Update ball position on X axis
   ball.y = ball.y + ball.speedY; // Update ball position on Y axis
 
   const maxSpeed = 2; // Maximum speed for both axes
 
-  // Collision with the platform
-  /*if ( // If the ball is colliding with the platform
-    ball.y + ball.radius >= platform.y && // Lower than platform on Y axis
-    ball.x >= platform.x && // The ball is not on the left from the platform
-    ball.x <= platform.x + platform.width // Ball is not on the right from the platform
+  // Collision with the platform (Arkanoid style)
+  if (
+    ball.speedY > 0 && // Only check for collision if the ball is moving downwards
+    ball.y + ball.radius >= platform.y &&
+    ball.y + ball.radius <= platform.y + platform.height &&
+    ball.x >= platform.x &&
+    ball.x <= platform.x + platform.width
   ) {
-    ball.speedY = -ball.speedY;
+    const maxBounce = Math.PI / 3; // 60°
+    const speed = Math.hypot(ball.speedX, ball.speedY);
+
     const hitPoint =
       (ball.x - (platform.x + platform.width / 2)) / (platform.width / 2);
 
-    console.log(hitPoint);
+    const angle = hitPoint * maxBounce;
 
-    if (hitPoint <= -0.49) {
-      ball.speedX = -Math.abs(ball.speedX);
-    }
-    if (hitPoint >= 0.49) {
-      ball.speedX = Math.abs(ball.speedX);
-    }
-    /*if (hitPoint >= -0.48 && hitPoint <= 0.48) {
-      ball.speedX = 0;
-      ball.speedY = -Math.abs(ball.speedY);
-      ball.speedX = initialSpeed;
-    }*/
-  //}
+    ball.speedX = speed * Math.sin(angle);
+    ball.speedY = -speed * Math.cos(angle);
 
-  // Collision with the platform (Arkanoid style)
-if (
-  ball.speedY > 0 && // мяч летит вниз
-  ball.y + ball.radius >= platform.y &&
-  ball.y + ball.radius <= platform.y + platform.height &&
-  ball.x >= platform.x &&
-  ball.x <= platform.x + platform.width
-) {
-  const maxBounce = Math.PI / 3; // 60°
-  const speed = Math.hypot(ball.speedX, ball.speedY);
+    // Ensure the ball's speed does not exceed the maximum speed
+    ball.y = platform.y - ball.radius - 0.01;
+  }
 
-  const hitPoint =
-    (ball.x - (platform.x + platform.width / 2)) / (platform.width / 2);
-
-  const angle = hitPoint * maxBounce;
-
-  ball.speedX = speed * Math.sin(angle);
-  ball.speedY = -speed * Math.cos(angle);
-
-  // выталкиваем мяч вверх, чтобы не было повторных столкновений
-  ball.y = platform.y - ball.radius - 0.01;
-}
-
-  // Collision with right and left window frames
+  // Collision with X axis and X=0 (the left) and X=canvas.width (the right)
   if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= canvas.width) {
     ball.speedX = -ball.speedX; // Reflect the ball on X axis
   }
@@ -192,16 +170,15 @@ if (
     ball.speedY = -ball.speedY; // Reflect the ball on Y axis
   }
 
-  if (ball.y + ball.radius >= canvas.height) { // Bottom window frame
-    alert('Game Over');
+  if (ball.y + ball.radius >= canvas.height) {
+    // Bottom window frame
+    alert('Game Over. To restart, press F5');
     // if Y-pos of the ball + his radius is overboarding game window frames (the bottom)
     //location.reload();
   }
 }
 
-const showBallSpeed = document.getElementById('ball-speed');
-
-const countPoints = document.getElementById('pts-counter');
+//const countPoints = document.getElementById('pts-counter');
 
 /* Reset position for ball and platform */
 function resetGame() {
@@ -211,8 +188,8 @@ function resetGame() {
     radius: 10,
     x: canvas.width / 2,
     y: canvas.height - 50,
-    speedX: 2,
-    speedY: 2,
+    speedX: 5,
+    speedY: 5,
   };
 
   platform = {
@@ -220,78 +197,104 @@ function resetGame() {
     height: 20,
     x: canvas.width / 2 - 50,
     y: canvas.height - 30,
-    speed: 7,
+    speed: 4,
   };
 }
 
 /* Obstacles */
 const obstacles = [
   // ===== РЯД 1 (strong) =====
-  { x: 40,  y: 40,  width: 60, height: 20, type: 'strong' },
-  { x: 110, y: 40,  width: 60, height: 20, type: 'strong' },
-  { x: 180, y: 40,  width: 60, height: 20, type: 'strong' },
-  { x: 250, y: 40,  width: 60, height: 20, type: 'strong' },
-  { x: 320, y: 40,  width: 60, height: 20, type: 'strong' },
-  { x: 390, y: 40,  width: 60, height: 20, type: 'strong' },
-  { x: 460, y: 40,  width: 60, height: 20, type: 'strong' },
-  { x: 530, y: 40,  width: 60, height: 20, type: 'strong' },
-  { x: 600, y: 40,  width: 60, height: 20, type: 'strong' },
-  { x: 670, y: 40,  width: 60, height: 20, type: 'strong' },
+  { x: 40, y: 40, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 110, y: 40, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 180, y: 40, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 250, y: 40, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 320, y: 40, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 390, y: 40, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 460, y: 40, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 530, y: 40, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 600, y: 40, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 670, y: 40, width: 60, height: 20, type: 'strong', hits: 0 },
 
   // ===== РЯД 2 (normal) =====
-  { x: 70,  y: 70,  width: 60, height: 20, type: 'normal' },
-  { x: 140, y: 70,  width: 60, height: 20, type: 'normal' },
-  { x: 210, y: 70,  width: 60, height: 20, type: 'normal' },
-  { x: 280, y: 70,  width: 60, height: 20, type: 'normal' },
-  { x: 350, y: 70,  width: 60, height: 20, type: 'normal' },
-  { x: 420, y: 70,  width: 60, height: 20, type: 'normal' },
-  { x: 490, y: 70,  width: 60, height: 20, type: 'normal' },
-  { x: 560, y: 70,  width: 60, height: 20, type: 'normal' },
-  { x: 630, y: 70,  width: 60, height: 20, type: 'normal' },
+  { x: 70, y: 70, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 140, y: 70, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 210, y: 70, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 280, y: 70, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 350, y: 70, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 420, y: 70, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 490, y: 70, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 560, y: 70, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 630, y: 70, width: 60, height: 20, type: 'normal', hits: 0 },
 
   // ===== РЯД 3 (weak) =====
-  { x: 40,  y: 100, width: 60, height: 20, type: 'weak' },
-  { x: 110, y: 100, width: 60, height: 20, type: 'weak' },
-  { x: 180, y: 100, width: 60, height: 20, type: 'weak' },
-  { x: 250, y: 100, width: 60, height: 20, type: 'weak' },
-  { x: 320, y: 100, width: 60, height: 20, type: 'weak' },
-  { x: 390, y: 100, width: 60, height: 20, type: 'weak' },
-  { x: 460, y: 100, width: 60, height: 20, type: 'weak' },
-  { x: 530, y: 100, width: 60, height: 20, type: 'weak' },
-  { x: 600, y: 100, width: 60, height: 20, type: 'weak' },
-  { x: 670, y: 100, width: 60, height: 20, type: 'weak' },
+  { x: 40, y: 100, width: 60, height: 20, type: 'weak', hits: 0 },
+  { x: 110, y: 100, width: 60, height: 20, type: 'weak', hits: 0 },
+  { x: 180, y: 100, width: 60, height: 20, type: 'weak', hits: 0 },
+  { x: 320, y: 100, width: 60, height: 20, type: 'weak', hits: 0 },
+  { x: 390, y: 100, width: 60, height: 20, type: 'weak', hits: 0 },
+  { x: 460, y: 100, width: 60, height: 20, type: 'weak', hits: 0 },
+  { x: 530, y: 100, width: 60, height: 20, type: 'weak', hits: 0 },
+  { x: 600, y: 100, width: 60, height: 20, type: 'weak', hits: 0 },
+  { x: 670, y: 100, width: 60, height: 20, type: 'weak', hits: 0 },
 
   // ===== РЯД 4 (normal, дырки) =====
-  { x: 110, y: 130, width: 60, height: 20, type: 'normal' },
-  { x: 180, y: 130, width: 60, height: 20, type: 'normal' },
-  { x: 320, y: 130, width: 60, height: 20, type: 'normal' },
-  { x: 390, y: 130, width: 60, height: 20, type: 'normal' },
-  { x: 530, y: 130, width: 60, height: 20, type: 'normal' },
-  { x: 600, y: 130, width: 60, height: 20, type: 'normal' },
+  { x: 110, y: 130, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 180, y: 130, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 320, y: 130, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 390, y: 130, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 530, y: 130, width: 60, height: 20, type: 'normal', hits: 0 },
+  { x: 600, y: 130, width: 60, height: 20, type: 'normal', hits: 0 },
 
   // ===== РЯД 5 (strong, шахматка) =====
-  { x: 70,  y: 160, width: 60, height: 20, type: 'strong' },
-  { x: 210, y: 160, width: 60, height: 20, type: 'strong' },
-  { x: 350, y: 160, width: 60, height: 20, type: 'strong' },
-  { x: 490, y: 160, width: 60, height: 20, type: 'strong' },
-  { x: 630, y: 160, width: 60, height: 20, type: 'strong' },
+  { x: 70, y: 160, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 210, y: 160, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 350, y: 160, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 490, y: 160, width: 60, height: 20, type: 'strong', hits: 0 },
+  { x: 630, y: 160, width: 60, height: 20, type: 'strong', hits: 0 },
 ];
 
 function drawObstacles() {
   for (let i = 0; i < obstacles.length; i++) {
     const obstacle = obstacles[i];
-    ctx.beginPath();
-    ctx.rect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 
-    if (obstacle.type === 'normal') {
-      ctx.fillStyle = '#64ac82ff';
-    } else if (obstacle.type === 'weak') {
-      ctx.fillStyle = '#5a89daff';
+    let fillColor = '#64ac82';
+    let strokeColor = '#2f5f45';
+    let highlightColor = '#9fdfb8';
+    let shadowColor = '#2a4a37';
+
+    if (obstacle.type === 'weak') {
+      fillColor = '#5a89da';
+      strokeColor = '#2d4f8f';
+      highlightColor = '#9bbcff';
+      shadowColor = '#223d6b';
     } else if (obstacle.type === 'strong') {
-      ctx.fillStyle = '#e767abff';
+      fillColor = '#e767ab';
+      strokeColor = '#943d6b';
+      highlightColor = '#ff9ac8';
+      shadowColor = '#6f2c4e';
     }
-    ctx.fill();
-    ctx.closePath();
+
+    // Основной корпус
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+
+    // Рамка
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = strokeColor;
+    ctx.strokeRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+
+    // Верхний блик
+    ctx.fillStyle = highlightColor;
+    ctx.fillRect(obstacle.x + 2, obstacle.y + 2, obstacle.width - 4, 4);
+
+    // Нижняя тень
+    ctx.fillStyle = shadowColor;
+    ctx.fillRect(
+      obstacle.x + 2,
+      obstacle.y + obstacle.height - 6,
+      obstacle.width - 4,
+      4,
+    );
   }
 }
 
@@ -299,18 +302,23 @@ function obstaclesBallCollision() {
   for (let i = 0; i < obstacles.length; i++) {
     const o = obstacles[i];
 
-    const hit =
-      ball.x + ball.radius > o.x && // right side of ball > left side of obstacle
-      ball.x - ball.radius < o.x + o.width && // left side of ball < right side of obstacle
-      ball.y + ball.radius > o.y && // bottom side of ball > top side of obstacle
-      ball.y - ball.radius < o.y + o.height; // top side of ball < bottom side of obstacle
+    const sweepLeft = Math.min(ball.prevX, ball.x) - ball.radius;
+    const sweepRight = Math.max(ball.prevX, ball.x) + ball.radius;
+    const sweepTop = Math.min(ball.prevY, ball.y) - ball.radius;
+    const sweepBottom = Math.max(ball.prevY, ball.y) + ball.radius;
 
-    if (!hit) continue;
+    const hit = // Переменные для проверки пересечения траектории мяча с прямоугольником препятствия
+      sweepRight > o.x && // это правая сторона траектории мяча > левая сторона препятствия
+      sweepLeft < o.x + o.width && // это левая сторона траектории мяча < правая сторона препятствия
+      sweepBottom > o.y && // это нижняя сторона траектории мяча > верхняя сторона препятствия
+      sweepTop < o.y + o.height; // это верхняя сторона траектории мяча < нижняя сторона препятствия
+
+    if (!hit) continue; // Если нет пересечения, переходим к следующему препятствию
 
     // Определяем, откуда мяч прилетел (по prevX/prevY)
-    const fromLeft   = ball.prevX + ball.radius <= o.x; // справа налево
-    const fromRight  = ball.prevX - ball.radius >= o.x + o.width; // слева направо
-    const fromTop    = ball.prevY + ball.radius <= o.y; // снизу вверх
+    const fromLeft = ball.prevX + ball.radius <= o.x; // справа налево
+    const fromRight = ball.prevX - ball.radius >= o.x + o.width; // слева направо
+    const fromTop = ball.prevY + ball.radius <= o.y; // снизу вверх
     const fromBottom = ball.prevY - ball.radius >= o.y + o.height; // сверху вниз
 
     if (fromTop) {
@@ -328,10 +336,10 @@ function obstaclesBallCollision() {
     } else {
       // Редкий случай: мяч "родился" внутри/влетел диагонально глубоко.
       // Выходим по минимальному проникновению (и тоже выталкиваем).
-      const overlapLeft = (ball.x + ball.radius) - o.x;
-      const overlapRight = (o.x + o.width) - (ball.x - ball.radius);
-      const overlapTop = (ball.y + ball.radius) - o.y;
-      const overlapBottom = (o.y + o.height) - (ball.y - ball.radius);
+      const overlapLeft = ball.x + ball.radius - o.x;
+      const overlapRight = o.x + o.width - (ball.x - ball.radius);
+      const overlapTop = ball.y + ball.radius - o.y;
+      const overlapBottom = o.y + o.height - (ball.y - ball.radius);
 
       const minX = Math.min(overlapLeft, overlapRight);
       const minY = Math.min(overlapTop, overlapBottom);
@@ -355,7 +363,28 @@ function obstaclesBallCollision() {
       }
     }
 
-    obstacles.splice(i, 1);
+    if (o.type === 'weak') {
+      // Если препятствие слабое, оно просто удаляется при первом столкновении
+      obstacles.splice(i, 1);
+      continue;
+    }
+
+    if (o.type === 'normal') {
+      // Если препятствие нормальное, оно удаляется при втором столкновении
+      o.type = 'weak'; // Сначала превращаем его в слабое, чтобы при следующем столкновении удалить
+      continue;
+    }
+
+    if (o.type === 'strong') {
+      o.hits++;
+
+      if (o.hits >= 3) {
+        o.type = 'normal';
+        o.hits = 0;
+      }
+
+      continue;
+    }
 
     if (obstacles.length === 0) {
       alert('You won! To restart, press F5');
@@ -370,18 +399,68 @@ function randomNum(from, to) {
   return Math.floor(Math.random() * (to - from + 1) + from);
 }
 
-/* Game loop */
+/* Menu */
+function drawMenu() {
+  ctx.fillStyle = 'rgb(21, 255, 0)';
+  ctx.font = '30px Georgia';
+  ctx.textAlign = 'center';
+  ctx.fillText('Click to Start', canvas.width / 2, canvas.height / 2);
+}
 
-function gameLoop() { // Главный игровой цикл
+/* Pause menu */
+function pauseMenu() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Полупрозрачный черный фон
+  ctx.fillRect(0, 0, canvas.width, canvas.height); // Заполнение всего канваса
+  ctx.fillStyle = 'white';
+  ctx.font = '30px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Game Paused', canvas.width / 2, canvas.height / 2);
+  ctx.fillText('Press P to Resume', canvas.width / 2, canvas.height / 2 + 40);
+}
+
+window.addEventListener('keydown', (event) => {
+  if (event.code === 'KeyP') {
+    if (gameState === 'paused') {
+      gameState = 'playing';
+    } else if (gameState === 'playing') {
+      gameState = 'paused';
+    }
+  }
+});
+
+window.addEventListener('click', () => {
+  if (gameState === 'menu') {
+    gameState = 'playing';
+  }
+});
+
+/* Game loop */
+// Главный игровой цикл - функция, которая будет вызываться для обновления и отрисовки игры на каждом кадре
+
+function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height); // Очищаем канвас
-  drawBall(); // Рисуем мяч
-  drawPlatform(); // Рисуем платформу
-  updatePlatformPosition(); // Обновляем позицию платформы
-  updateBallPosition(); // Обновляем позицию мяча
-  drawObstacles(); // Рисуем препятствия
-  obstaclesBallCollision(); // Проверяем столкновения мяча с препятствиями
-  showBallSpeed.textContent = `Ball Speed: ${ball.speedX} ${ball.speedY}`; // Отображаем скорость мяча
-  requestAnimationFrame(gameLoop); // Запрашиваем следующий кадр
+
+  if (gameState === 'menu') {
+    drawMenu();
+  }
+
+  if (gameState === 'playing') {
+    drawBall(); // Рисуем мяч
+    drawPlatform(); // Рисуем платформу
+    updatePlatformPosition(); // Обновляем позицию платформы
+    updateBallPosition(); // Обновляем позицию мяча
+    drawObstacles(); // Рисуем препятствия
+    obstaclesBallCollision(); // Проверяем столкновения мяча с препятствиями
+  }
+
+  if (gameState === 'paused') {
+    drawBall();
+    drawPlatform();
+    drawObstacles();
+    pauseMenu();
+  }
+
+  requestAnimationFrame(gameLoop); // Запрашиваем следующий кадр для анимации
 }
 
 gameLoop(); // Начинаем игровой цикл

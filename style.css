@@ -1,10 +1,11 @@
 body {
+    font-family: 'Georgia', serif;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     margin: 0;
-    background-color: rgb(58, 58, 58);
+    background-color: rgb(0, 0, 0);
 }
 
 #coordinates {
@@ -25,11 +26,23 @@ body {
     top: 70px;
 }
 
-
 #c1 {
     width: 800px;
     height: 600px;
-    border: 3px solid rgb(255, 1, 1);
+    border: 3px solid rgb(21, 255, 0);
     margin: 40px auto;
-    background-color:rgb(204, 220, 235);
+    background-IMAGE: url('/Webb\'s_First_Deep_Field.jpg');
+}
+
+.header {
+    color:rgb(21, 255, 0);
+    font-size: 40px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
