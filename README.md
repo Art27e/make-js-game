@@ -18,16 +18,18 @@ Windows <br />
 > Use Liver Server Plugin in Visual Studio Code (recommended) <br />
 
 #### Code Description
-A classic Arkanoid game built with vanilla JavaScript and HTML5 Canvas. Actively developed in 2026 — planned updates include visual redesign, sprite/sound integration, bug fixes, and migration from Canvas to pure HTML/CSS/JS.
+A classic Arkanoid game built with vanilla JavaScript and HTML5 Canvas. <br /> Actively developed in 2026 — planned updates include visual redesign, sprite/sound integration, bug fixes, and migration from Canvas to pure HTML/CSS/JS.
 
 #### Game Updates
-**1.0.0**- Refactored ball collision detection
-- Redesigned game visuals
-- Added pause and game start functionality
-- Increased ball speed
-- Introduced durability-based brick system:
-  - Light brick: 1 hit to destroy
-  - Normal brick: 2 hits to destroy
-  - Heavy brick: 3 hits to destroy
+### 1.0.0
+- Refactored ball collision detection.
+- Redesigned the game visuals.
+- Added start screen and pause functionality.
+- Increased ball speed.
+- Introduced a durability-based brick system:
+  - Light bricks break in 1 hit.
+  - Normal bricks break in 2 hits.
+  - Heavy bricks break in 3 hits.
 
-**beta 1.0**- Release
+### Beta 1.0
+- Initial release.
